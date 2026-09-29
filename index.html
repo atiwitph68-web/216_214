@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>นักสร้างแผนภูมิ ป.4 - สื่อการสอนวิทยาการคำนวณ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=Mitr:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(135deg, #E0F2FE 0%, #EFF6FF 50%, #F0FDF4 100%);
+      user-select: none;
+    }
+    .font-mitr {
+      font-family: 'Mitr', sans-serif;
+    }
+    .chart-grid-line {
+      stroke: #E2E8F0;
+      stroke-dasharray: 4 4;
+    }
+    .bar-transition {
+      transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), y 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bounce-hover:hover {
+      transform: translateY(-2px);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: #CBD5E1;
+      border-radius: 9999px;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .pulse-attention {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+  <header class="bg-white/90 backdrop-blur-md border-b-4 border-amber-300 shadow-sm sticky top-0 z-30 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-2xl shadow-md transform rotate-3">
+          📊
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-extrabold text-blue-900 tracking-tight font-mitr">นักสร้างแผนภูมิ ป.4</h1>
+            <span class="bg-blue-100 text-blue-700 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-blue-200">วิทยาการคำนวณ</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500">บทเรียน: การนำเสนอข้อมูลด้วยแผนภูมิแท่งเชิงเปรียบเทียบ</p>
+        </div>
+      </div>
+
+      <!-- Action buttons & Sound toggle -->
+      <div class="flex items-center gap-2">
+        <button id="btnSoundToggle" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-sm font-semibold flex items-center gap-1.5 shadow-sm transition">
+          <span id="soundIcon">🔊</span>
+          <span class="hidden sm:inline">เสียงประกอบ</span>
+        </button>
+        <button id="btnHelp" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-semibold border border-indigo-200 flex items-center gap-1 transition">
+          <span>💡</span>
+          <span>วิธีเล่น / องค์ประกอบ</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto w-full p-4 sm:p-6 flex-1 space-y-6">
+    <!-- Topic Selection Banner -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 rounded-2xl p-4 sm:p-5 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl shrink-0">
+          🎯
+        </div>
+        <div>
+          <h2 class="text-lg font-bold">ชุดข้อมูลสำหรับฝึกฝน</h2>
+          <p class="text-blue-100 text-xs sm:text-sm">อ่านตารางข้อมูล แล้วตั้งค่าแผนภูมิแท่งให้ถูกต้องและเหมาะสม</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <button onclick="switchDataset(0)" id="topicBtn-0" class="topic-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold bg-white text-blue-900 shadow transition whitespace-nowrap">
+          🍎 ผลไม้สุดโปรด
+        </button>
+        <button onclick="switchDataset(1)" id="topicBtn-1" class="topic-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold bg-white/20 hover:bg-white/30 text-white transition whitespace-nowrap">
+          ⚽ กีฬาที่ชอบเล่น
+        </button>
+        <button onclick="switchDataset(2)" id="topicBtn-2" class="topic-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold bg-white/20 hover:bg-white/30 text-white transition whitespace-nowrap">
+          📚 หนังสือในห้องสมุด
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Column: Source Data Table & Controls (5 Cols) -->
+      <div class="lg:col-span-5 space-y-5">
+        <!-- Table Card -->
+        <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-md p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3 border-b pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📋</span>
+              <h3 class="font-bold text-slate-800 text-base" id="tableTitleLabel">ตารางบันทึกข้อมูลดิบ</h3>
+            </div>
+            <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">ข้อมูลเป้าหมาย</span>
+          </div>
+
+          <p class="text-xs text-slate-500 mb-3" id="tableDescription">
+            สำรวจความชอบของนักเรียนชั้น ป.4 เพื่อนำข้อมูลไปจัดงานเลี้ยงสังสรรค์
+          </p>
+
+          <!-- The Table -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-slate-100 text-slate-700 font-bold text-xs uppercase">
+                <tr>
+                  <th scope="col" class="px-4 py-2.5" id="colHeaderCategory">รายการ</th>
+                  <th scope="col" class="px-4 py-2.5 text-right" id="colHeaderValue">จำนวน (คน)</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-3 bg-amber-50 rounded-xl p-2.5 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+            <span class="text-base">💡</span>
+            <span>สังเกตค่าจำนวนของแต่ละรายการ เพื่อนำไปสร้างแท่งแผนภูมิให้มีความสูงเท่ากัน</span>
+          </div>
+        </div>
+
+        <!-- Chart Configuration Step Card -->
+        <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-md p-4 sm:p-5 space-y-4">
+          <div class="flex items-center gap-2 border-b pb-2">
+            <span class="text-xl">⚙️</span>
+            <h3 class="font-bold text-slate-800 text-base">ขั้นตอนที่ 1: กำหนดส่วนประกอบแผนภูมิ</h3>
+          </div>
+
+          <!-- Step 1: Chart Title Selection -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+              <span>1. ชื่อแผนภูมิ (ระบุว่าแผนภูมินี้แสดงอะไร)</span>
+              <span class="text-[11px] text-blue-600 font-semibold">*เลือกให้ตรงกับข้อมูล</span>
+            </label>
+            <select id="selectChartTitle" class="w-full bg-slate-50 border-2 border-slate-200 focus:border-blue-500 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium transition focus:outline-none">
+              <option value="">-- กรุณาเลือกชื่อแผนภูมิที่ถูกต้อง --</option>
+              <!-- Options populated by JS -->
+            </select>
+          </div>
+
+          <!-- Step 2: Axis Selection -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">
+                2. แกนตั้ง (แกน Y)
+              </label>
+              <select id="selectYAxis" class="w-full bg-slate-50 border-2 border-slate-200 focus:border-blue-500 rounded-xl px-2.5 py-2 text-xs sm:text-sm text-slate-800 font-medium transition focus:outline-none">
+                <option value="">-- เลือกชื่อแกนตั้ง --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">
+                3. แกนนอน (แกน X)
+              </label>
+              <select id="selectXAxis" class="w-full bg-slate-50 border-2 border-slate-200 focus:border-blue-500 rounded-xl px-2.5 py-2 text-xs sm:text-sm text-slate-800 font-medium transition focus:outline-none">
+                <option value="">-- เลือกชื่อแกนนอน --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Bar Quantity Input Controls -->
+        <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-md p-4 sm:p-5 space-y-3">
+          <div class="flex items-center justify-between border-b pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📊</span>
+              <h3 class="font-bold text-slate-800 text-base">ขั้นตอนที่ 2: ปรับความสูงของแท่งข้อมูล</h3>
+            </div>
+            <button onclick="resetBarValues()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold underline">
+              รีเซ็ตค่าแท่ง
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-500">กดปุ่ม ➕ หรือ ➖ เพื่อเพิ่ม-ลดความสูง หรือปรับแท่งบนแผนภูมิโดยตรง</p>
+
+          <div id="barControlList" class="space-y-2.5 pt-1">
+            <!-- Dynamically populated per category -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Bar Chart Preview Canvas (7 Cols) -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-lg p-4 sm:p-6 flex flex-col justify-between min-h-[560px]">
+          <!-- Top area: Chart Title Banner on chart -->
+          <div class="text-center pb-2 border-b border-dashed border-slate-200">
+            <div id="chartDisplayTitle" class="text-base sm:text-lg font-bold text-slate-800 tracking-wide font-mitr min-h-[28px] flex items-center justify-center">
+              <span class="text-slate-400 italic font-normal text-sm">[ โปรดเลือกชื่อแผนภูมิจากเมนูด้านซ้าย ]</span>
+            </div>
+          </div>
+
+          <!-- The Dynamic SVG Chart Container -->
+          <div class="relative flex-1 py-4 flex items-center justify-center overflow-x-auto custom-scroll">
+            <div class="w-full max-w-[620px] aspect-[4/3] min-w-[340px] relative" id="chartSvgWrapper">
+              <svg id="interactiveChartSvg" viewBox="0 0 540 380" class="w-full h-full drop-shadow-sm select-none">
+                <!-- SVG Content generated via JS -->
+              </svg>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons: Check & Hints -->
+          <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>พร้อมให้แก้ไขได้ตลอดเวลาก่อนส่งคำตอบ</span>
+            </div>
+            <div class="flex items-center gap-2.5 w-full sm:w-auto">
+              <button id="btnCheckAnswer" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold text-sm shadow-md hover:shadow-lg transform active:scale-95 transition flex items-center justify-center gap-2">
+                <span>✅ ตรวจสอบคำตอบและส่งผลงาน</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Educational Hint Box -->
+        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3">
+          <span class="text-2xl">🧐</span>
+          <div class="text-xs text-indigo-950 space-y-1">
+            <span class="font-bold text-sm block text-indigo-900">เกร็ดความรู้วิทยาการคำนวณ (การนำเสนอข้อมูล):</span>
+            <p>
+              <strong>แผนภูมิแท่ง (Bar Chart)</strong> เป็นเครื่องมือที่ใช้รูปสี่เหลี่ยมมุมฉากแสดงปริมาณของข้อมูลแต่ละรายการ
+              ช่วยให้เรา <em>เปรียบเทียบข้อมูลได้รวดเร็ว ชัดเจน และมองเห็นจุดสูงสุด-ต่ำสุดได้ทันที</em> โดยไม่ต้องเสียเวลาไล่อ่านตัวเลขทีละแถว
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Score & Result Modal -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-amber-300 transform transition-all duration-300 scale-95 opacity-0 text-center" id="resultModalCard">
+      <div id="modalBadgeIcon" class="w-20 h-20 mx-auto rounded-full bg-amber-100 flex items-center justify-center text-4xl mb-3 shadow-inner">
+        🌟
+      </div>
+      <h3 id="resultTitle" class="text-2xl font-bold font-mitr text-slate-800">ผลการประเมินแผนภูมิ</h3>
+      <p id="resultSubtitle" class="text-sm text-slate-500 mb-4">มาดูผลคะแนนการสร้างแผนภูมิของนักเรียนกันเลย!</p>
+
+      <!-- Score Gauge -->
+      <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 mb-4 space-y-2 text-left">
+        <div class="flex items-center justify-between text-sm font-bold text-slate-700">
+          <span>คะแนนรวมทั้งหมด:</span>
+          <span id="scoreDisplay" class="text-xl text-blue-600 font-extrabold font-mitr">100 / 100</span>
+        </div>
+        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+          <div id="scoreProgressBar" class="h-full bg-emerald-500 rounded-full transition-all duration-700" style="width: 0%"></div>
+        </div>
+
+        <!-- Breakdown checklist -->
+        <div class="pt-2 text-xs space-y-1.5 text-slate-600 border-t border-slate-200 mt-2 font-medium" id="scoreBreakdown">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Feedback Advice Box -->
+      <div id="feedbackAdvice" class="p-3 rounded-xl text-xs text-left mb-5 bg-blue-50 text-blue-900 border border-blue-200">
+        <!-- Explanatory feedback -->
+      </div>
+
+      <!-- Action Buttons in Modal -->
+      <div class="flex items-center gap-2">
+        <button id="btnCloseModal" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm hover:bg-slate-100 transition">
+          ย้อนกลับไปแก้ไข
+        </button>
+        <button id="btnNextDatasetModal" class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow transition">
+          ฝึกโจทย์ถัดไป ➡️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instruction / Help Modal -->
+  <div id="helpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-indigo-200 text-left space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📘</span>
+          <h3 class="text-lg font-bold text-slate-800 font-mitr">โครงสร้างของแผนภูมิแท่ง (ป.4)</h3>
+        </div>
+        <button id="btnCloseHelp" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">
+          ✕
+        </button>
+      </div>
+
+      <!-- Educational details -->
+      <div class="space-y-3 text-sm text-slate-600">
+        <div class="flex items-start gap-3 bg-amber-50 p-3 rounded-xl border border-amber-200">
+          <span class="text-xl">🏷️</span>
+          <div>
+            <strong class="text-amber-900 block font-semibold">1. ชื่อแผนภูมิ (Chart Title)</strong>
+            <span>อยู่ด้านบนสุด ระบุว่าแผนภูมินี้แสดงเรื่องอะไร ให้ผู้อ่านเข้าใจได้ทันที</span>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 bg-sky-50 p-3 rounded-xl border border-sky-200">
+          <span class="text-xl">📐</span>
+          <div>
+            <strong class="text-sky-900 block font-semibold">2. แกนตั้ง (Vertical Axis / Y)</strong>
+            <span>บอก <strong>"จำนวนหรือปริมาณ"</strong> พร้อมหน่วยนับ (เช่น คน, เล่ม, ครั้ง) โดยมีเส้นสเกลบอกระยะที่เท่าๆ กัน</span>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+          <span class="text-xl">📏</span>
+          <div>
+            <strong class="text-emerald-900 block font-semibold">3. แกนนอน (Horizontal Axis / X)</strong>
+            <span>บอก <strong>"หมวดหมู่หรือรายการ"</strong> ของข้อมูล เช่น ชนิดของผลไม้ หรือชื่อกีฬา</span>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 bg-purple-50 p-3 rounded-xl border border-purple-200">
+          <span class="text-xl">📊</span>
+          <div>
+            <strong class="text-purple-900 block font-semibold">4. แท่งสี่เหลี่ยมผืนผ้า (Bars)</strong>
+            <span>ความสูงของแต่ละแท่งจะต้องตรงกับปริมาณในตารางข้อมูลพอดี ยิ่งสูงแปลว่ามีจำนวนยิ่งมาก</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 text-center">
+        <button id="btnGotItHelp" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow">
+          เข้าใจแล้ว เริ่มสร้างแผนภูมิเลย!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 text-center py-4 px-4 text-xs text-slate-500">
+    <p>สื่อการเรียนรู้เชิงปฏิสัมพันธ์ (Interactive Learning) • วิชาวิทยาการคำนวณ ชั้นประถมศึกษาปีที่ 4</p>
+    <p class="text-[11px] text-slate-400 mt-1">ออกแบบตามมาตรฐานหลักสูตรแกนกลางการศึกษาขั้นพื้นฐาน (กลุ่มสาระวิทยาศาสตร์และเทคโนโลยี)</p>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const DATASETS = [
+      {
+        id: 0,
+        name: "ผลไม้สุดโปรด",
+        context: "สำรวจความชอบของนักเรียนชั้น ป.4 เพื่อเตรียมของว่างสำหรับกิจกรรมวันเด็ก",
+        tableTitle: "ผลไม้ที่นักเรียนชั้น ป.4 ชื่นชอบ",
+        categoryHeader: "ชนิดผลไม้",
+        valueHeader: "จำนวน (คน)",
+        maxValue: 16,
+        step: 2,
+        items: [
+          { name: "แอปเปิล", icon: "🍎", value: 8, color: "#EF4444" },
+          { name: "กล้วย", icon: "🍌", value: 12, color: "#F59E0B" },
+          { name: "ส้ม", icon: "🍊", value: 6, color: "#FB923C" },
+          { name: "แตงโม", icon: "🍉", value: 10, color: "#10B981" },
+          { name: "มะม่วง", icon: "🥭", value: 14, color: "#EAB308" }
+        ],
+        titleOptions: [
+          { text: "ผลไม้ที่นักเรียนชั้น ป.4 ชื่นชอบ", correct: true },
+          { text: "ราคาผลไม้ในตลาดสดประจำวัน", correct: false, note: "ในตารางไม่ได้พูดถึงราคาเงินบาท แต่เป็นจำนวนคนที่ชอบ" },
+          { text: "จำนวนต้นไม้ที่ปลูกในโรงเรียน", correct: false, note: "ตารางสำรวจความชอบผลไม้ของเด็ก ป.4 ไม่ใช่การปลูกต้นไม้" },
+          { text: "สรุปผลการแข่งขันกีฬาสี ป.4", correct: false, note: "หัวข้อนี้ไม่เกี่ยวกับผลไม้เลยครับ" }
+        ],
+        yAxisOptions: [
+          { text: "จำนวน (คน)", correct: true },
+          { text: "น้ำหนัก (กิโลกรัม)", correct: false, note: "ข้อมูลบันทึกเป็นจำนวนคนที่ชอบ ไม่ใช่น้ำหนัก" },
+          { text: "ราคา (บาท)", correct: false, note: "ตารางไม่ได้สำรวจราคาผลไม้" },
+          { text: "คะแนนสอบ", correct: false, note: "แกนตั้งควรเป็นจำนวนคนที่ชอบผลไม้" }
+        ],
+        xAxisOptions: [
+          { text: "ชนิดของผลไม้", correct: true },
+          { text: "วันในหนึ่งสัปดาห์", correct: false, note: "รายการข้างล่างเป็นผลไม้ เช่น แอปเปิล กล้วย ไม่ใช่วันจันทร์-ศุกร์" },
+          { text: "ห้องเรียน ป.4/1 ถึง ป.4/5", correct: false, note: "รายการไม่ได้แบ่งตามห้องเรียน" },
+          { text: "ยี่ห้อรถยนต์", correct: false, note: "รายการด้านล่างคือผลไม้ครับ" }
+        ]
+      },
+      {
+        id: 1,
+        name: "กีฬาที่ชอบเล่น",
+        context: "สำรวจความสนใจของนักเรียนชั้น ป.4 เพื่อจัดซื้ออุปกรณ์กีฬาเข้าชมรม",
+        tableTitle: "กีฬาที่นักเรียนชั้น ป.4 ชอบเล่นในเวลาว่าง",
+        categoryHeader: "ประเภทกีฬา",
+        valueHeader: "จำนวน (คน)",
+        maxValue: 16,
+        step: 2,
+        items: [
+          { name: "ฟุตบอล", icon: "⚽", value: 14, color: "#3B82F6" },
+          { name: "แบดมินตัน", icon: "🏸", value: 10, color: "#8B5CF6" },
+          { name: "ว่ายน้ำ", icon: "🏊", value: 8, color: "#06B6D4" },
+          { name: "บาสเกตบอล", icon: "🏀", value: 12, color: "#F97316" },
+          { name: "วิ่งเล่น", icon: "🏃", value: 6, color: "#10B981" }
+        ],
+        titleOptions: [
+          { text: "กีฬาที่นักเรียนชั้น ป.4 ชอบเล่นในเวลาว่าง", correct: true },
+          { text: "ตารางคะแนนฟุตบอลโลก", correct: false, note: "ข้อมูลเป็นการสำรวจความชอบของนักเรียน ไม่ใช่ตารางแข่งระดับโลก" },
+          { text: "จำนวนอุปกรณ์กีฬาที่ชำรุด", correct: false, note: "ตารางสำรวจนักเรียนที่ชอบเล่น ไม่ใช่อุปกรณ์พัง" },
+          { text: "รายชื่อครูพละศึกษา", correct: false, note: "ตารางนี้แสดงชนิดกีฬาที่เด็กๆ ชอบ" }
+        ],
+        yAxisOptions: [
+          { text: "จำนวน (คน)", correct: true },
+          { text: "ระยะทาง (เมตร)", correct: false, note: "แกนตั้งควรเป็นจำนวนนักเรียนที่ชอบกีฬา" },
+          { text: "เวลาที่ใช้ (นาที)", correct: false, note: "เราสำรวจเป็นจำนวนคนครับ" }
+        ],
+        xAxisOptions: [
+          { text: "ประเภทกีฬา", correct: true },
+          { text: "วิชาที่ชอบเรียน", correct: false, note: "รายการคือชื่อกีฬา เช่น ฟุตบอล แบดมินตัน" },
+          { text: "ขนาดลูกบอล", correct: false, note: "รายการด้านล่างคือชื่อกีฬาต่างๆ" }
+        ]
+      },
+      {
+        id: 2,
+        name: "หนังสือในห้องสมุด",
+        context: "สถิติการยืมหนังสือของนักเรียนชั้น ป.4 ในสัปดาห์รักการอ่าน",
+        tableTitle: "จำนวนหนังสือที่นักเรียน ป.4 ยืมอ่านมากที่สุด",
+        categoryHeader: "หมวดหมู่หนังสือ",
+        valueHeader: "จำนวน (เล่ม)",
+        maxValue: 16,
+        step: 2,
+        items: [
+          { name: "การ์ตูนความรู้", icon: "📚", value: 16, color: "#EC4899" },
+          { name: "นิทานอีสป", icon: "📖", value: 12, color: "#6366F1" },
+          { name: "วิทยาศาสตร์", icon: "🔬", value: 10, color: "#14B8A6" },
+          { name: "สารคดีสัตว์", icon: "🐾", value: 6, color: "#84CC16" },
+          { name: "ประวัติศาสตร์", icon: "🏛️", value: 4, color: "#F59E0B" }
+        ],
+        titleOptions: [
+          { text: "จำนวนหนังสือที่นักเรียน ป.4 ยืมอ่านมากที่สุด", correct: true },
+          { text: "จำนวนโต๊ะเก้าอี้ในห้องสมุด", correct: false, note: "ตารางแสดงหนังสือที่ยืมอ่าน ไม่ใช่จำนวนเฟอร์นิเจอร์" },
+          { text: "สถิติการมาโรงเรียนสาย", correct: false, note: "ข้อมูลเกี่ยวกับหนังสือในห้องสมุดครับ" }
+        ],
+        yAxisOptions: [
+          { text: "จำนวน (เล่ม)", correct: true },
+          { text: "จำนวน (คน)", correct: false, note: "สังเกตหน่วยในตาราง ระบุเป็น 'เล่ม' ครับ" },
+          { text: "ความหนา (หน้า)", correct: false, note: "แกนตั้งนับจำนวนเล่มหนังสือที่ถูกยืม" }
+        ],
+        xAxisOptions: [
+          { text: "หมวดหมู่หนังสือ", correct: true },
+          { text: "ชื่อผู้แต่งหนังสือ", correct: false, note: "รายการคือหมวดหมู่ เช่น การ์ตูน วิทยาศาสตร์ ไม่ใช่ชื่อคน" },
+          { text: "ชั้นวางหนังสือ (ชั้น 1-5)", correct: false, note: "รายการคือหมวดหมู่หนังสือ" }
+        ]
+      }
+    ];
+
+    let currentDatasetIndex = 0;
+    let studentData = {
+      title: "",
+      yAxis: "",
+      xAxis: "",
+      bars: [] // array of numbers matching current items
+    };
+    let soundEnabled = true;
+    let synth = null;
+
+    function initAudio() {
+      if (!synth && window.Tone) {
+        try {
+          synth = new Tone.PolySynth(Tone.Synth).toDestination();
+          synth.volume.value = -8;
+        } catch (e) {
+          console.log("Audio couldn't initialize immediately:", e);
+        }
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        if (Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        initAudio();
+        if (!synth) return;
+
+        const now = Tone.now();
+        if (type === 'click') {
+          synth.triggerAttackRelease('C5', '0.05', now);
+        } else if (type === 'adjust') {
+          synth.triggerAttackRelease('E5', '0.06', now);
+        } else if (type === 'success') {
+          synth.triggerAttackRelease(['C5', 'E5', 'G5', 'C6'], '0.4', now);
+        } else if (type === 'tryAgain') {
+          synth.triggerAttackRelease(['F4', 'D4'], '0.2', now);
+        }
+      } catch (err) {
+        // Fallback gracefully
+      }
+    }
+
+    function switchDataset(index) {
+      currentDatasetIndex = index;
+      const data = DATASETS[currentDatasetIndex];
+
+      // Update topic buttons active state
+      DATASETS.forEach((_, i) => {
+        const btn = document.getElementById(`topicBtn-${i}`);
+        if (i === index) {
+          btn.className = "topic-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold bg-white text-blue-900 shadow transition whitespace-nowrap";
+        } else {
+          btn.className = "topic-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold bg-white/20 hover:bg-white/30 text-white transition whitespace-nowrap";
+        }
+      });
+
+      // Update Table header & info
+      document.getElementById('tableTitleLabel').textContent = data.tableTitle;
+      document.getElementById('tableDescription').textContent = data.context;
+      document.getElementById('colHeaderCategory').textContent = data.categoryHeader;
+      document.getElementById('colHeaderValue').textContent = data.valueHeader;
+
+      // Populate Table Body
+      const tbody = document.getElementById('dataTableBody');
+      tbody.innerHTML = '';
+      data.items.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60';
+        tr.innerHTML = `
+          <td class="px-4 py-2.5 font-medium text-slate-800 flex items-center gap-2">
+            <span class="text-base">${item.icon}</span>
+            <span>${item.name}</span>
+          </td>
+          <td class="px-4 py-2.5 text-right font-bold text-blue-700">${item.value}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Populate Dropdowns
+      populateSelect('selectChartTitle', data.titleOptions);
+      populateSelect('selectYAxis', data.yAxisOptions);
+      populateSelect('selectXAxis', data.xAxisOptions);
+
+      // Reset student answers
+      studentData = {
+        title: "",
+        yAxis: "",
+        xAxis: "",
+        bars: new Array(data.items.length).fill(0)
+      };
+
+      // Reset Select Elements
+      document.getElementById('selectChartTitle').value = "";
+      document.getElementById('selectYAxis').value = "";
+      document.getElementById('selectXAxis').value = "";
+
+      renderBarControls();
+      renderChart();
+      playSound('click');
+    }
+
+    function populateSelect(elemId, options) {
+      const select = document.getElementById(elemId);
+      const defaultText = select.options[0].text;
+      select.innerHTML = `<option value="">${defaultText}</option>`;
+      
+      // Shuffle options for engagement
+      const shuffled = [...options].sort(() => Math.random() - 0.5);
+      shuffled.forEach(opt => {
+        const optionElem = document.createElement('option');
+        optionElem.value = opt.text;
+        optionElem.textContent = opt.text;
+        select.appendChild(optionElem);
+      });
+    }
+
+    function renderBarControls() {
+      const container = document.getElementById('barControlList');
+      container.innerHTML = '';
+      const data = DATASETS[currentDatasetIndex];
+
+      data.items.forEach((item, i) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 p-2 sm:p-2.5 rounded-xl border border-slate-200 transition';
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${item.icon}</span>
+            <span class="text-xs sm:text-sm font-semibold text-slate-700">${item.name}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="changeBarValue(${i}, -${data.step})" class="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold flex items-center justify-center text-base transition active:scale-90" title="ลดค่า">
+              ➖
+            </button>
+            <span id="barValueLabel-${i}" class="w-9 text-center font-bold text-slate-800 text-sm font-mitr">
+              ${studentData.bars[i]}
+            </span>
+            <button onclick="changeBarValue(${i}, ${data.step})" class="w-8 h-8 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold flex items-center justify-center text-base transition active:scale-90" title="เพิ่มค่า">
+              ➕
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function changeBarValue(index, delta) {
+      const data = DATASETS[currentDatasetIndex];
+      let newVal = studentData.bars[index] + delta;
+      if (newVal < 0) newVal = 0;
+      if (newVal > data.maxValue) newVal = data.maxValue;
+
+      studentData.bars[index] = newVal;
+      const label = document.getElementById(`barValueLabel-${index}`);
+      if (label) label.textContent = newVal;
+
+      playSound('adjust');
+      renderChart();
+    }
+
+    function resetBarValues() {
+      const data = DATASETS[currentDatasetIndex];
+      studentData.bars = new Array(data.items.length).fill(0);
+      data.items.forEach((_, i) => {
+        const label = document.getElementById(`barValueLabel-${i}`);
+        if (label) label.textContent = 0;
+      });
+      playSound('click');
+      renderChart();
+    }
+
+    function renderChart() {
+      const data = DATASETS[currentDatasetIndex];
+      const svg = document.getElementById('interactiveChartSvg');
+      const titleDisplay = document.getElementById('chartDisplayTitle');
+
+      // Update Chart Title display
+      if (studentData.title) {
+        titleDisplay.innerHTML = `<span class="text-blue-900 font-bold">${studentData.title}</span>`;
+      } else {
+        titleDisplay.innerHTML = `<span class="text-slate-400 italic font-normal text-xs sm:text-sm">[ โปรดเลือกชื่อแผนภูมิจากเมนูด้านซ้าย ]</span>`;
+      }
+
+      // Dimensions within SVG coordinates (viewBox 0 0 540 380)
+      const svgWidth = 540;
+      const svgHeight = 380;
+      const margin = { top: 30, right: 30, bottom: 65, left: 75 };
+      const chartWidth = svgWidth - margin.left - margin.right;
+      const chartHeight = svgHeight - margin.top - margin.bottom;
+
+      const maxValue = data.maxValue;
+      const step = data.step;
+      const numSteps = maxValue / step;
+
+      let svgHTML = '';
+
+      // Y-Axis Gridlines & Numbers
+      for (let s = 0; s <= numSteps; s++) {
+        const val = s * step;
+        const y = margin.top + chartHeight - (val / maxValue) * chartHeight;
+
+        // Gridline
+        svgHTML += `
+          <line x1="${margin.left}" y1="${y}" x2="${margin.left + chartWidth}" y2="${y}" class="chart-grid-line" stroke="#E2E8F0" stroke-width="1.2" />
+          <text x="${margin.left - 12}" y="${y + 4}" font-size="11" font-weight="600" text-anchor="end" fill="#64748B" font-family="'Prompt', sans-serif">${val}</text>
+        `;
+      }
+
+      // Axes main lines
+      svgHTML += `
+        <!-- Y-Axis line -->
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + chartHeight}" stroke="#475569" stroke-width="2.5" stroke-linecap="round" />
+        <!-- X-Axis line -->
+        <line x1="${margin.left}" y1="${margin.top + chartHeight}" x2="${margin.left + chartWidth}" y2="${margin.top + chartHeight}" stroke="#475569" stroke-width="2.5" stroke-linecap="round" />
+      `;
+
+      // Y-Axis Label
+      const yLabelText = studentData.yAxis || "[ยังไม่ได้เลือกแกนตั้ง]";
+      const yLabelColor = studentData.yAxis ? "#1E293B" : "#94A3B8";
+      svgHTML += `
+        <text transform="rotate(-90)" x="${-(margin.top + chartHeight / 2)}" y="24" font-size="12" font-weight="700" text-anchor="middle" fill="${yLabelColor}" font-family="'Prompt', sans-serif">
+          ${yLabelText}
+        </text>
+      `;
+
+      // X-Axis Label
+      const xLabelText = studentData.xAxis || "[ยังไม่ได้เลือกแกนนอน]";
+      const xLabelColor = studentData.xAxis ? "#1E293B" : "#94A3B8";
+      svgHTML += `
+        <text x="${margin.left + chartWidth / 2}" y="${svgHeight - 10}" font-size="12" font-weight="700" text-anchor="middle" fill="${xLabelColor}" font-family="'Prompt', sans-serif">
+          ${xLabelText}
+        </text>
+      `;
+
+      // Bars Rendering
+      const barSpacing = chartWidth / data.items.length;
+      const barWidth = Math.min(46, barSpacing * 0.65);
+
+      data.items.forEach((item, i) => {
+        const userVal = studentData.bars[i] || 0;
+        const barH = (userVal / maxValue) * chartHeight;
+        const barX = margin.left + i * barSpacing + (barSpacing - barWidth) / 2;
+        const barY = margin.top + chartHeight - barH;
+
+        // Interactive bar rectangle with click-to-boost feature
+        svgHTML += `
+          <!-- Bar Group -->
+          <g class="cursor-pointer group" onclick="changeBarValue(${i}, ${data.step})">
+            <!-- Background click track -->
+            <rect x="${barX - 4}" y="${margin.top}" width="${barWidth + 8}" height="${chartHeight}" fill="transparent" />
+            
+            <!-- Value tag floating above bar -->
+            <rect x="${barX + barWidth/2 - 14}" y="${barY - 24}" width="28" height="18" rx="5" fill="#1E293B" class="transition-all" />
+            <text x="${barX + barWidth / 2}" y="${barY - 11}" font-size="11" font-weight="700" text-anchor="middle" fill="#FFFFFF" font-family="'Prompt', sans-serif">${userVal}</text>
+
+            <!-- Main Bar -->
+            <rect x="${barX}" y="${barY}" width="${barWidth}" height="${barH}" rx="6" fill="${item.color}" class="bar-transition drop-shadow-sm hover:opacity-90" stroke="#000000" stroke-opacity="0.08" stroke-width="1" />
+
+            <!-- Category Label & Icon under bar -->
+            <text x="${barX + barWidth / 2}" y="${margin.top + chartHeight + 20}" font-size="16" text-anchor="middle">${item.icon}</text>
+            <text x="${barX + barWidth / 2}" y="${margin.top + chartHeight + 36}" font-size="11" font-weight="600" text-anchor="middle" fill="#334155" font-family="'Prompt', sans-serif">${item.name}</text>
+          </g>
+        `;
+      });
+
+      svg.innerHTML = svgHTML;
+    }
+
+    document.getElementById('selectChartTitle').addEventListener('change', (e) => {
+      studentData.title = e.target.value;
+      playSound('adjust');
+      renderChart();
+    });
+
+    document.getElementById('selectYAxis').addEventListener('change', (e) => {
+      studentData.yAxis = e.target.value;
+      playSound('adjust');
+      renderChart();
+    });
+
+    document.getElementById('selectXAxis').addEventListener('change', (e) => {
+      studentData.xAxis = e.target.value;
+      playSound('adjust');
+      renderChart();
+    });
+
+    function evaluateSubmission() {
+      const data = DATASETS[currentDatasetIndex];
+      let totalScore = 0;
+      const breakdown = [];
+      const advice = [];
+
+      // 1. Check Title (20 Points)
+      const correctTitleObj = data.titleOptions.find(o => o.correct);
+      const isTitleCorrect = studentData.title === correctTitleObj.text;
+      if (isTitleCorrect) {
+        totalScore += 20;
+        breakdown.push({ label: "ชื่อแผนภูมิถูกต้อง (+20)", passed: true });
+      } else {
+        breakdown.push({ label: "ชื่อแผนภูมิยังไม่ถูกต้อง (+0)", passed: false });
+        if (!studentData.title) {
+          advice.push("⚠️ ยังไม่ได้เลือก <strong>ชื่อแผนภูมิ</strong> (จำเป็นต้องมีเพื่อบอกผู้อ่านว่าแผนภูมิแสดงอะไร)");
+        } else {
+          const selectedObj = data.titleOptions.find(o => o.text === studentData.title);
+          const reason = selectedObj && selectedObj.note ? selectedObj.note : "ยังไม่สอดคล้องกับตารางข้อมูล";
+          advice.push(`⚠️ ชื่อแผนภูมิ '${studentData.title}' ยังไม่ถูกต้อง: ${reason}`);
+        }
+      }
+
+      // 2. Check Y-Axis Label (20 Points)
+      const correctYObj = data.yAxisOptions.find(o => o.correct);
+      const isYCorrect = studentData.yAxis === correctYObj.text;
+      if (isYCorrect) {
+        totalScore += 20;
+        breakdown.push({ label: "ชื่อแกนตั้ง (แกน Y) ถูกต้อง (+20)", passed: true });
+      } else {
+        breakdown.push({ label: "ชื่อแกนตั้งยังไม่ถูกต้อง (+0)", passed: false });
+        if (!studentData.yAxis) {
+          advice.push("⚠️ อย่าลืมเลือก <strong>ชื่อแกนตั้ง</strong> ที่ระบุปริมาณและหน่วยนับ");
+        } else {
+          advice.push(`⚠️ แกนตั้ง '${studentData.yAxis}' ยังไม่ถูกต้อง แกนตั้งควรบอกปริมาณและหน่วยนับที่ตรงกับตาราง`);
+        }
+      }
+
+      // 3. Check X-Axis Label (20 Points)
+      const correctXObj = data.xAxisOptions.find(o => o.correct);
+      const isXCorrect = studentData.xAxis === correctXObj.text;
+      if (isXCorrect) {
+        totalScore += 20;
+        breakdown.push({ label: "ชื่อแกนนอน (แกน X) ถูกต้อง (+20)", passed: true });
+      } else {
+        breakdown.push({ label: "ชื่อแกนนอนยังไม่ถูกต้อง (+0)", passed: false });
+        if (!studentData.xAxis) {
+          advice.push("⚠️ อย่าลืมเลือก <strong>ชื่อแกนนอน</strong> ที่ระบุหมวดหมู่รายการ");
+        } else {
+          advice.push(`⚠️ แกนนอน '${studentData.xAxis}' ยังไม่ถูกต้อง แกนนอนควรระบุหมวดหมู่ที่นำมาเปรียบเทียบ`);
+        }
+      }
+
+      // 4. Check Bars Quantities (40 Points total, divided by number of bars)
+      const pointsPerBar = 40 / data.items.length;
+      let correctBarsCount = 0;
+      const incorrectBars = [];
+
+      data.items.forEach((item, i) => {
+        const studentVal = studentData.bars[i] || 0;
+        if (studentVal === item.value) {
+          correctBarsCount++;
+        } else {
+          incorrectBars.push({ name: item.name, expected: item.value, got: studentVal });
+        }
+      });
+
+      const barsScore = Math.round(correctBarsCount * pointsPerBar);
+      totalScore += barsScore;
+
+      if (correctBarsCount === data.items.length) {
+        breakdown.push({ label: `ความสูงแท่งข้อมูลถูกต้องครบ ${data.items.length} รายการ (+40)`, passed: true });
+      } else {
+        breakdown.push({ label: `ความสูงแท่งข้อมูลถูกต้อง ${correctBarsCount}/${data.items.length} รายการ (+${barsScore})`, passed: false });
+        const listStr = incorrectBars.map(b => `${b.name} (ในตารางมี ${b.expected} แต่ตั้งไว้ ${b.got})`).join(', ');
+        advice.push(`📊 แท่งข้อมูลที่ยังไม่ตรงกับตาราง: ${listStr}`);
+      }
+
+      showResultModal(totalScore, breakdown, advice);
+    }
+
+    function showResultModal(score, breakdown, advice) {
+      const modal = document.getElementById('resultModal');
+      const card = document.getElementById('resultModalCard');
+      const badge = document.getElementById('modalBadgeIcon');
+      const title = document.getElementById('resultTitle');
+      const scoreDisplay = document.getElementById('scoreDisplay');
+      const progressBar = document.getElementById('scoreProgressBar');
+      const breakdownContainer = document.getElementById('scoreBreakdown');
+      const adviceBox = document.getElementById('feedbackAdvice');
+
+      // Populate Score
+      scoreDisplay.textContent = `${score} / 100`;
+      progressBar.style.width = `${score}%`;
+
+      if (score === 100) {
+        badge.innerHTML = '🏆';
+        badge.className = 'w-20 h-20 mx-auto rounded-full bg-amber-100 flex items-center justify-center text-4xl mb-3 shadow-inner ring-4 ring-amber-300';
+        title.textContent = 'ยอดเยี่ยมมาก! สร้างแผนภูมิสมบูรณ์แบบ';
+        title.className = 'text-2xl font-bold font-mitr text-emerald-700';
+        adviceBox.className = 'p-3 rounded-xl text-xs text-left mb-5 bg-emerald-50 text-emerald-900 border border-emerald-200';
+        adviceBox.innerHTML = `🎉 <strong>สรุปผลการวิเคราะห์ข้อมูล:</strong> นักเรียนนำเสนอข้อมูลได้ถูกต้องครบทุกองค์ประกอบ แผนภูมินี้ช่วยให้เห็นชัดเจนว่า <em>${getComparisonSummary()}</em>`;
+        playSound('success');
+
+        // Confetti explosion
+        if (window.confetti) {
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      } else if (score >= 60) {
+        badge.innerHTML = '⭐';
+        badge.className = 'w-20 h-20 mx-auto rounded-full bg-blue-100 flex items-center justify-center text-4xl mb-3 shadow-inner ring-4 ring-blue-300';
+        title.textContent = 'ทำได้ดีมาก! ใกล้จะสมบูรณ์แล้ว';
+        title.className = 'text-2xl font-bold font-mitr text-blue-800';
+        adviceBox.className = 'p-3 rounded-xl text-xs text-left mb-5 bg-amber-50 text-amber-900 border border-amber-200';
+        adviceBox.innerHTML = advice.join('<br>');
+        playSound('adjust');
+      } else {
+        badge.innerHTML = '💪';
+        badge.className = 'w-20 h-20 mx-auto rounded-full bg-rose-100 flex items-center justify-center text-4xl mb-3 shadow-inner ring-4 ring-rose-300';
+        title.textContent = 'พยายามอีกนิดนะ! ลองตรวจสอบใหม่';
+        title.className = 'text-2xl font-bold font-mitr text-rose-700';
+        adviceBox.className = 'p-3 rounded-xl text-xs text-left mb-5 bg-rose-50 text-rose-900 border border-rose-200';
+        adviceBox.innerHTML = advice.join('<br>');
+        playSound('tryAgain');
+      }
+
+      // Populate checklist items
+      breakdownContainer.innerHTML = '';
+      breakdown.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between';
+        div.innerHTML = `
+          <span>${item.label}</span>
+          <span class="${item.passed ? 'text-emerald-600 font-bold' : 'text-rose-500 font-bold'}">${item.passed ? '✓ ถูกต้อง' : '✗ แก้ไข'}</span>
+        `;
+        breakdownContainer.appendChild(div);
+      });
+
+      // Show modal
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        card.classList.remove('scale-95', 'opacity-0');
+        card.classList.add('scale-100', 'opacity-100');
+      }, 20);
+    }
+
+    function getComparisonSummary() {
+      const data = DATASETS[currentDatasetIndex];
+      const sorted = [...data.items].sort((a, b) => b.value - a.value);
+      const highest = sorted[0];
+      const lowest = sorted[sorted.length - 1];
+      return `รายการที่มีจำนวนมากที่สุดคือ '${highest.name}' (${highest.value}) และน้อยที่สุดคือ '${lowest.name}' (${lowest.value})`;
+    }
+
+    document.getElementById('btnCheckAnswer').addEventListener('click', () => {
+      evaluateSubmission();
+    });
+
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+      const modal = document.getElementById('resultModal');
+      const card = document.getElementById('resultModalCard');
+      card.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+      playSound('click');
+    });
+
+    document.getElementById('btnNextDatasetModal').addEventListener('click', () => {
+      document.getElementById('btnCloseModal').click();
+      const nextIndex = (currentDatasetIndex + 1) % DATASETS.length;
+      switchDataset(nextIndex);
+    });
+
+    // Help Modal Triggers
+    const helpModal = document.getElementById('helpModal');
+    document.getElementById('btnHelp').addEventListener('click', () => {
+      helpModal.classList.remove('hidden');
+      playSound('click');
+    });
+    document.getElementById('btnCloseHelp').addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+      playSound('click');
+    });
+    document.getElementById('btnGotItHelp').addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+      playSound('click');
+    });
+
+    // Sound Toggle Trigger
+    document.getElementById('btnSoundToggle').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+      playSound('click');
+    });
+
+    // Initialize application on load
+    window.addEventListener('DOMContentLoaded', () => {
+      switchDataset(0);
+    });
+  </script>
+</body>
+</html>
